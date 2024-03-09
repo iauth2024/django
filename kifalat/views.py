@@ -8,6 +8,7 @@ from .models import StudentStatusUpdate, Tawassut, Kafeel, Course, Class, Sectio
 from .forms import ProgressForm, KafeelStatusUpdateForm
 from kifalat import models
 
+
 def home(request):
     return render(request, 'home.html')
 
@@ -59,6 +60,11 @@ def kafeel_status_update(request):
     return render(request, 'kafeel_status_update.html', context)
 from django.shortcuts import render
 
+from django.db.models import Sum
+from decimal import Decimal
+
+# ... (other imports)
+
 def sponsor_dashboard(request, kafeel_id):
     if request.method == 'POST':
         entered_number = request.POST.get('kafeel_number')
@@ -73,9 +79,9 @@ def sponsor_dashboard(request, kafeel_id):
             for student in dashboard_data:
                 student.progress_data = Progress.objects.filter(student=student)
                 # Calculate total paid
-                total_paid = student.progress_data.aggregate( Sum('amount_paid'))['amount_paid__sum'] or 0.0
+                total_paid = student.progress_data.aggregate(Sum('amount_paid'))['amount_paid__sum'] or Decimal('0.0')
                 # Fetch total fees for the student (replace 'total_fees' with the actual field name)
-                total_fees = student.total_fees
+                total_fees = Decimal(str(student.total_fees)) if student.total_fees is not None else Decimal('0.0')
                 # Calculate due amount
                 due_amount = total_fees - total_paid
                 # Assign calculated values to the student object
@@ -90,6 +96,7 @@ def sponsor_dashboard(request, kafeel_id):
             return render(request, 'sponsor_dashboard_login.html', {'error_message': 'Invalid Kafeel credentials. Please try again.'})
 
     return render(request, 'sponsor_dashboard_login.html', {'kafeel_id': kafeel_id})
+
 def get_students(request):
     # Your view logic for get_students goes here
     return render(request, 'fetch_students.html', {'students': StudentStatusUpdate})
